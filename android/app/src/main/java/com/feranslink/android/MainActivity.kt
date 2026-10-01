@@ -23,6 +23,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -33,6 +34,7 @@ import io.github.jan.supabase.realtime.broadcastFlow
 import io.github.jan.supabase.realtime.channel
 import io.github.jan.supabase.realtime.broadcast
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import java.security.MessageDigest
@@ -66,6 +68,7 @@ private fun FeransLinkApp() {
     var status by remember { mutableStateOf("Offline") }
     var request by remember { mutableStateOf<ConnectionRequest?>(null) }
     var channelHolder by remember { mutableStateOf<FeransChannel?>(null) }
+    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         if (DeviceIdentity.pin.isBlank()) {
@@ -151,16 +154,20 @@ private fun FeransLinkApp() {
             text = { Text("Windows ingin terhubung ke perangkat ini. Izinkan?") },
             confirmButton = {
                 Button(onClick = {
-                    channelHolder?.allow(req.sessionId)
-                    request = null
-                    status = "Terhubung"
+                    coroutineScope.launch {
+                        channelHolder?.allow(req.sessionId)
+                        request = null
+                        status = "Terhubung"
+                    }
                 }) { Text("Izinkan") }
             },
             dismissButton = {
                 OutlinedButton(onClick = {
-                    channelHolder?.deny(req.sessionId)
-                    request = null
-                    status = "Siap"
+                    coroutineScope.launch {
+                        channelHolder?.deny(req.sessionId)
+                        request = null
+                        status = "Siap"
+                    }
                 }) { Text("Tolak") }
             }
         )
@@ -212,7 +219,6 @@ private class FeransChannel(
     private val pin: String
 ) {
     private var channel: io.github.jan.supabase.realtime.RealtimeChannel? = null
-    private var currentSession: String? = null
 
     private suspend fun topic(): String {
         val bytes = MessageDigest.getInstance("SHA-256")
@@ -233,7 +239,6 @@ private class FeransChannel(
         c.broadcastFlow<kotlinx.serialization.json.JsonObject>("connection_request")
             .collectLatest { payload ->
                 val session = payload["sessionId"]?.toString()?.trim('"') ?: return@collectLatest
-                currentSession = session
                 onRequest(ConnectionRequest(session))
             }
     }
@@ -261,6 +266,5 @@ private class FeransChannel(
     suspend fun close() {
         channel?.unsubscribe()
         channel = null
-        currentSession = null
     }
 }
