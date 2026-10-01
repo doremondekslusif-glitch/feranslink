@@ -51,6 +51,7 @@ private val supabase = createSupabaseClient(
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        DeviceIdentity.init(applicationContext)
         setContent {
             FeransLinkApp()
         }
@@ -226,15 +227,15 @@ private class FeransChannel(
         val c = supabase.channel(topic())
         channel = c
 
+        c.subscribe(blockUntilSubscribed = true)
+        onStatus("Siap")
+
         c.broadcastFlow<kotlinx.serialization.json.JsonObject>("connection_request")
             .collectLatest { payload ->
                 val session = payload["sessionId"]?.toString()?.trim('"') ?: return@collectLatest
                 currentSession = session
                 onRequest(ConnectionRequest(session))
             }
-
-        c.subscribe(blockUntilSubscribed = true)
-        onStatus("Siap")
     }
 
     suspend fun allow(sessionId: String) {
