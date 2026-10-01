@@ -28,11 +28,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.realtime.Realtime
+import io.github.jan.supabase.realtime.broadcast
 import io.github.jan.supabase.realtime.broadcastFlow
 import io.github.jan.supabase.realtime.channel
-import io.github.jan.supabase.realtime.broadcast
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import java.security.MessageDigest
@@ -52,9 +53,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         DeviceIdentity.init(applicationContext)
-        setContent {
-            FeransLinkApp()
-        }
+        setContent { FeransLinkApp() }
     }
 }
 
@@ -69,10 +68,6 @@ private fun FeransLinkApp() {
     val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
-        if (DeviceIdentity.pin.isBlank()) {
-            DeviceIdentity.pin = (100000..999999).random().toString()
-            pin = DeviceIdentity.pin
-        }
         deviceId = DeviceIdentity.id
         pin = DeviceIdentity.pin
     }
@@ -119,22 +114,14 @@ private fun FeransLinkApp() {
 
             if (!ready) {
                 Button(
-                    onClick = {
-                        if (deviceId != DeviceIdentity.id) DeviceIdentity.id = deviceId
-                        if (pin != DeviceIdentity.pin) DeviceIdentity.pin = pin
-                        ready = true
-                    },
+                    onClick = { ready = true },
                     modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Siapkan Koneksi")
-                }
+                ) { Text("Siapkan Koneksi") }
             } else {
                 OutlinedButton(
                     onClick = { ready = false },
                     modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Hentikan Koneksi")
-                }
+                ) { Text("Hentikan Koneksi") }
             }
 
             Spacer(Modifier.height(10.dp))
@@ -172,6 +159,14 @@ private fun FeransLinkApp() {
     }
 }
 
+@Serializable
+private data class ConnectionRequestPayload(
+    val sessionId: String,
+    val deviceId: String? = null,
+    val controller: String? = null,
+    val requestedAt: String? = null
+)
+
 private data class ConnectionRequest(val sessionId: String)
 
 private object DeviceIdentity {
@@ -194,22 +189,17 @@ private object DeviceIdentity {
         initialized = true
     }
 
-    var id: String
+    val id: String
         get() = idValue
-        set(value) {
-            idValue = value
-            if (initialized) prefs.edit().putString("device_id", value).apply()
-        }
 
-    var pin: String
+    val pin: String
         get() = pinValue
-        set(value) {
-            pinValue = value
-            if (initialized) prefs.edit().putString("pairing_pin", value).apply()
-        }
 
-    private fun generateId(): String = "FL-" + UUID.randomUUID().toString().replace("-", "").take(8).uppercase()
-    private fun generatePin(): String = (100000..999999).random().toString()
+    private fun generateId(): String =
+        "FL-" + UUID.randomUUID().toString().replace("-", "").take(8).uppercase()
+
+    private fun generatePin(): String =
+        (100000..999999).random().toString()
 }
 
 private class FeransChannel(
@@ -234,10 +224,9 @@ private class FeransChannel(
         c.subscribe(blockUntilSubscribed = true)
         onStatus("Siap")
 
-        c.broadcastFlow<kotlinx.serialization.json.JsonObject>("connection_request")
+        c.broadcastFlow<ConnectionRequestPayload>("connection_request")
             .collectLatest { payload ->
-                val session = payload["sessionId"]?.toString()?.trim('"') ?: return@collectLatest
-                onRequest(ConnectionRequest(session))
+                onRequest(ConnectionRequest(payload.sessionId))
             }
     }
 
