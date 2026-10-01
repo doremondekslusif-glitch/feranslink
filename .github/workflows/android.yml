@@ -1,4 +1,5 @@
 name: Build Android APK
+# Build verification: Android + Supabase realtime
 
 on:
   push:
