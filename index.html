@@ -3,37 +3,141 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FeransLink</title>
+<title>FeransLink — Remote Device</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="app">
   <aside class="sidebar">
-    <div class="brand"><div class="brand-mark">F</div><div><b>FeransLink</b><span>Remote Device</span></div></div>
+    <div class="brand">
+      <div class="brand-mark">F</div>
+      <div><b>FeransLink</b><span>Remote Device</span></div>
+    </div>
     <nav>
-      <button class="nav-item active" data-page="devices">▦ <span>Perangkat</span></button>
-      <button class="nav-item" data-page="settings">⚙ <span>Pengaturan</span></button>
-      <button class="nav-item" data-page="help">? <span>Bantuan</span></button>
+      <button class="nav-item active" data-page="devices"><span class="nav-icon">▦</span><span>Perangkat</span></button>
+      <button class="nav-item" data-page="settings"><span class="nav-icon">⚙</span><span>Pengaturan</span></button>
+      <button class="nav-item" data-page="help"><span class="nav-icon">?</span><span>Bantuan</span></button>
     </nav>
-    <div class="sidebar-foot">V1 Prototype</div>
+    <div class="sidebar-foot">FeransLink V1</div>
   </aside>
+
   <main class="main">
-    <header class="topbar"><div><h1 id="page-title">Perangkat</h1><p id="page-subtitle">Kelola perangkat Android yang terhubung.</p></div><button id="addBtn" class="primary">＋ Tambah Perangkat</button></header>
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">FERANSLINK</div>
+        <h1 id="page-title">Perangkat</h1>
+        <p id="page-subtitle">Kelola perangkat Android yang terhubung.</p>
+      </div>
+      <button id="addBtn" class="primary">＋ Tambah Perangkat</button>
+    </header>
+
     <section id="devices" class="page active">
-      <div id="empty" class="empty"><div class="empty-icon">▣</div><h2>Belum ada perangkat</h2><p>Tambahkan Device ID Android untuk mulai menyiapkan koneksi.</p><button class="primary" id="emptyAdd">＋ Tambah Perangkat</button></div>
+      <div class="section-row">
+        <div>
+          <h2>Perangkat Anda</h2>
+          <p id="deviceSummary">Belum ada perangkat tersimpan.</p>
+        </div>
+      </div>
+      <div id="empty" class="empty">
+        <div class="empty-icon">▣</div>
+        <h2>Belum ada perangkat</h2>
+        <p>Tambahkan Device ID dari aplikasi FeransLink di Android.</p>
+        <button class="primary" id="emptyAdd">＋ Tambah Perangkat</button>
+      </div>
       <div id="deviceList" class="device-list"></div>
     </section>
-    <section id="settings" class="page"><div class="panel"><h2>Pengaturan</h2><p>Pengaturan koneksi dan tampilan akan tersedia di tahap berikutnya.</p></div></section>
-    <section id="help" class="page"><div class="panel"><h2>Bantuan</h2><p>FeransLink digunakan untuk mengakses perangkat Android milik Anda melalui koneksi internet.</p></div></section>
+
+    <section id="settings" class="page">
+      <div class="panel">
+        <div class="panel-icon">⚙</div>
+        <h2>Pengaturan</h2>
+        <p>Pengaturan koneksi, tampilan, dan kualitas remote control akan tersedia saat koneksi Android mulai diaktifkan.</p>
+      </div>
+    </section>
+
+    <section id="help" class="page">
+      <div class="panel">
+        <div class="panel-icon">?</div>
+        <h2>Bantuan</h2>
+        <p>FeransLink digunakan untuk mengakses dan mengendalikan perangkat Android melalui internet dengan persetujuan perangkat.</p>
+      </div>
+    </section>
+
     <section id="remote" class="remote page">
-      <div class="remote-head"><button class="back-link" id="backBtn">← Perangkat</button><span id="remoteName">Remote Control</span><span class="remote-status">● Siap</span></div>
-      <div class="screen-area"><div class="phone-frame"><div class="phone-screen"><div class="screen-placeholder"><div class="phone-icon">▣</div><b>Layar Android</b><span>Menunggu koneksi perangkat...</span></div></div></div></div>
-      <div class="toolbar"><button>🖱 Mouse</button><button>⌨ Keyboard</button><button id="fitBtn">↔ Fit</button><button>⛶ Fullscreen</button><button>◀ Back</button><button>⌂ Home</button><button>▣ Recent</button><button>↻ Rotate</button><button class="danger" id="stopBtn">✕ Stop</button></div>
+      <div class="remote-head">
+        <button class="back-link" id="backBtn">← Perangkat</button>
+        <div class="remote-title-wrap">
+          <strong id="remoteName">Remote Control</strong>
+          <span id="remoteDeviceId">—</span>
+        </div>
+        <span class="remote-status"><i></i><span id="remoteStatusText">Menunggu</span></span>
+      </div>
+      <div class="screen-area" id="screenArea">
+        <div class="phone-frame" id="phoneFrame">
+          <div class="phone-screen">
+            <div class="screen-placeholder">
+              <div class="phone-icon">▣</div>
+              <b>Layar Android</b>
+              <span>Menunggu koneksi perangkat...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="toolbar">
+        <button data-action="mouse">🖱 <span>Mouse</span></button>
+        <button data-action="keyboard">⌨ <span>Keyboard</span></button>
+        <button id="fitBtn">↔ <span>Fit</span></button>
+        <button id="fullscreenBtn">⛶ <span>Fullscreen</span></button>
+        <button data-action="back">◀ <span>Back</span></button>
+        <button data-action="home">⌂ <span>Home</span></button>
+        <button data-action="recent">▣ <span>Recent</span></button>
+        <button id="rotateBtn">↻ <span>Rotate</span></button>
+        <button class="danger" id="stopBtn">✕ <span>Stop</span></button>
+      </div>
     </section>
   </main>
 </div>
-<div id="modal" class="modal hidden"><div class="dialog"><h2>Tambah Perangkat</h2><p>Masukkan Device ID dari aplikasi FeransLink di Android.</p><input id="deviceId" placeholder="Contoh: FL-7A42-K9P2" autocomplete="off"><div class="dialog-actions"><button id="cancel">Batal</button><button class="primary" id="save">Tambahkan</button></div></div></div>
-<div id="stopModal" class="modal hidden"><div class="dialog"><h2>Hentikan koneksi?</h2><p>Sesi remote control akan dihentikan.</p><div class="dialog-actions"><button id="stopCancel">Batal</button><button class="danger-fill" id="stopConfirm">Hentikan</button></div></div></div>
+
+<div id="modal" class="modal hidden">
+  <div class="dialog">
+    <button class="dialog-close" id="cancelTop" aria-label="Tutup">×</button>
+    <div class="dialog-icon">＋</div>
+    <h2>Tambah Perangkat</h2>
+    <p>Masukkan Device ID dari aplikasi FeransLink di Android.</p>
+    <label for="deviceId">Device ID</label>
+    <input id="deviceId" placeholder="Contoh: FL-7A42-K9P2" autocomplete="off" maxlength="40">
+    <div id="addError" class="form-error hidden">Device ID belum diisi.</div>
+    <div class="dialog-actions">
+      <button id="cancel">Batal</button>
+      <button class="primary" id="save">Tambahkan</button>
+    </div>
+  </div>
+</div>
+
+<div id="deleteModal" class="modal hidden">
+  <div class="dialog">
+    <div class="dialog-icon danger-icon">!</div>
+    <h2>Hapus perangkat?</h2>
+    <p id="deleteText">Perangkat akan dihapus dari daftar FeransLink.</p>
+    <div class="dialog-actions">
+      <button id="deleteCancel">Batal</button>
+      <button class="danger-fill" id="deleteConfirm">Hapus</button>
+    </div>
+  </div>
+</div>
+
+<div id="stopModal" class="modal hidden">
+  <div class="dialog">
+    <div class="dialog-icon danger-icon">×</div>
+    <h2>Hentikan koneksi?</h2>
+    <p>Sesi remote control akan dihentikan dan perangkat kembali ke daftar.</p>
+    <div class="dialog-actions">
+      <button id="stopCancel">Batal</button>
+      <button class="danger-fill" id="stopConfirm">Hentikan</button>
+    </div>
+  </div>
+</div>
+
 <script src="app.js"></script>
 </body>
 </html>
