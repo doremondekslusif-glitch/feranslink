@@ -28,7 +28,10 @@
         <h1 id="page-title">Perangkat</h1>
         <p id="page-subtitle">Kelola perangkat Android yang terhubung.</p>
       </div>
-      <button id="addBtn" class="primary">＋ Tambah Perangkat</button>
+      <div class="topbar-actions">
+        <span id="realtimeStatus" class="backend-status"><i></i>Server siap</span>
+        <button id="addBtn" class="primary">＋ Tambah Perangkat</button>
+      </div>
     </header>
 
     <section id="devices" class="page active">
@@ -41,7 +44,7 @@
       <div id="empty" class="empty">
         <div class="empty-icon">▣</div>
         <h2>Belum ada perangkat</h2>
-        <p>Tambahkan Device ID dari aplikasi FeransLink di Android.</p>
+        <p>Tambahkan Device ID dan PIN dari aplikasi FeransLink di Android.</p>
         <button class="primary" id="emptyAdd">＋ Tambah Perangkat</button>
       </div>
       <div id="deviceList" class="device-list"></div>
@@ -78,7 +81,7 @@
             <div class="screen-placeholder">
               <div class="phone-icon">▣</div>
               <b>Layar Android</b>
-              <span>Menunggu koneksi perangkat...</span>
+              <span id="screenMessage">Menunggu koneksi perangkat...</span>
             </div>
           </div>
         </div>
@@ -103,10 +106,12 @@
     <button class="dialog-close" id="cancelTop" aria-label="Tutup">×</button>
     <div class="dialog-icon">＋</div>
     <h2>Tambah Perangkat</h2>
-    <p>Masukkan Device ID dari aplikasi FeransLink di Android.</p>
+    <p>Masukkan Device ID dan PIN pasangan dari aplikasi FeransLink di Android.</p>
     <label for="deviceId">Device ID</label>
     <input id="deviceId" placeholder="Contoh: FL-7A42-K9P2" autocomplete="off" maxlength="40">
-    <div id="addError" class="form-error hidden">Device ID belum diisi.</div>
+    <label for="devicePin">PIN Pasangan</label>
+    <input id="devicePin" placeholder="6 digit PIN" inputmode="numeric" autocomplete="off" maxlength="6">
+    <div id="addError" class="form-error hidden">Device ID dan PIN harus diisi.</div>
     <div class="dialog-actions">
       <button id="cancel">Batal</button>
       <button class="primary" id="save">Tambahkan</button>
@@ -138,6 +143,8 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
