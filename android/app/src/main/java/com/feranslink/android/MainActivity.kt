@@ -233,7 +233,7 @@ private class FeransChannel(
     suspend fun allow(sessionId: String) {
         channel?.broadcast(
             event = "connection_response",
-            payload = buildJsonObject {
+            message = buildJsonObject {
                 put("sessionId", sessionId)
                 put("action", "allow")
             }
@@ -243,7 +243,7 @@ private class FeransChannel(
     suspend fun deny(sessionId: String) {
         channel?.broadcast(
             event = "connection_response",
-            payload = buildJsonObject {
+            message = buildJsonObject {
                 put("sessionId", sessionId)
                 put("action", "deny")
             }
