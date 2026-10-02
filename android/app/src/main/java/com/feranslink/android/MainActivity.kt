@@ -31,7 +31,10 @@ import io.github.jan.supabase.realtime.Realtime
 import io.github.jan.supabase.realtime.broadcast
 import io.github.jan.supabase.realtime.broadcastFlow
 import io.github.jan.supabase.realtime.channel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -209,6 +212,7 @@ private class FeransChannel(
 ) {
     private var channel: io.github.jan.supabase.realtime.RealtimeChannel? = null
     private var requestJob: Job? = null
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private suspend fun topic(): String {
         val bytes = MessageDigest.getInstance("SHA-256")
@@ -224,13 +228,11 @@ private class FeransChannel(
         channel = c
 
         // Pasang listener SEBELUM subscribe agar tidak ada request yang terlewat.
-        requestJob = kotlinx.coroutines.coroutineScope {
-            launch {
-                c.broadcastFlow<ConnectionRequestPayload>(event = "connection_request")
-                    .collectLatest { payload ->
-                        onRequest(ConnectionRequest(payload.sessionId))
-                    }
-            }
+        requestJob = scope.launch {
+            c.broadcastFlow<ConnectionRequestPayload>(event = "connection_request")
+                .collectLatest { payload ->
+                    onRequest(ConnectionRequest(payload.sessionId))
+                }
         }
 
         try {
