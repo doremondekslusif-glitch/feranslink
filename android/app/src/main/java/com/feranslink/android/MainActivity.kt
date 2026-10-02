@@ -31,6 +31,7 @@ import io.github.jan.supabase.realtime.Realtime
 import io.github.jan.supabase.realtime.broadcast
 import io.github.jan.supabase.realtime.broadcastFlow
 import io.github.jan.supabase.realtime.channel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -207,6 +208,7 @@ private class FeransChannel(
     private val pin: String
 ) {
     private var channel: io.github.jan.supabase.realtime.RealtimeChannel? = null
+    private var requestJob: Job? = null
 
     private suspend fun topic(): String {
         val bytes = MessageDigest.getInstance("SHA-256")
@@ -221,13 +223,25 @@ private class FeransChannel(
         val c = supabase.channel(topic())
         channel = c
 
-        c.subscribe(blockUntilSubscribed = true)
-        onStatus("Siap")
-
-        c.broadcastFlow<ConnectionRequestPayload>("connection_request")
-            .collectLatest { payload ->
-                onRequest(ConnectionRequest(payload.sessionId))
+        // Pasang listener SEBELUM subscribe agar tidak ada request yang terlewat.
+        requestJob = kotlinx.coroutines.coroutineScope {
+            launch {
+                c.broadcastFlow<ConnectionRequestPayload>(event = "connection_request")
+                    .collectLatest { payload ->
+                        onRequest(ConnectionRequest(payload.sessionId))
+                    }
             }
+        }
+
+        try {
+            c.subscribe(blockUntilSubscribed = true)
+            onStatus("Siap")
+        } catch (e: Throwable) {
+            requestJob?.cancel()
+            requestJob = null
+            channel = null
+            onStatus("Gagal terhubung: " + (e.message ?: "Realtime error"))
+        }
     }
 
     suspend fun allow(sessionId: String) {
@@ -251,6 +265,8 @@ private class FeransChannel(
     }
 
     suspend fun close() {
+        requestJob?.cancel()
+        requestJob = null
         channel?.unsubscribe()
         channel = null
     }
