@@ -53,7 +53,13 @@ private val supabase = createSupabaseClient(
     supabaseUrl = SUPABASE_URL,
     supabaseKey = SUPABASE_PUBLISHABLE_KEY
 ) {
-    install(Realtime)
+    install(Realtime) {
+        // FeransLink memakai Realtime public channel tanpa sistem login.
+        // Jangan memutus WebSocket hanya karena tidak ada Auth session.
+        requireValidSession = false
+        disconnectOnSessionLoss = false
+        heartbeatInterval = kotlin.time.Duration.Companion.seconds(15)
+    }
 }
 
 class MainActivity : ComponentActivity() {
@@ -252,7 +258,7 @@ private class FeransChannel(
             }
 
             onStatus("WebSocket: Menghubungkan...")
-            withTimeout(15_000L) {
+            withTimeout(20_000L) {
                 c.subscribe(blockUntilSubscribed = true)
             }
             onStatus("Channel: SUBSCRIBED")
@@ -271,7 +277,7 @@ private class FeransChannel(
             realtimeStatusJob = null
             channel?.unsubscribe()
             channel = null
-            onStatus("TIMEOUT: Supabase Realtime tidak selesai terhubung dalam 15 detik")
+            onStatus("TIMEOUT: Supabase Realtime tidak selesai terhubung dalam 20 detik")
         } catch (e: Throwable) {
             requestJob?.cancel()
             requestJob = null
