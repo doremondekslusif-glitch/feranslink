@@ -32,6 +32,7 @@ import io.github.jan.supabase.realtime.broadcast
 import io.github.jan.supabase.realtime.broadcastFlow
 import io.github.jan.supabase.realtime.channel
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -228,7 +229,7 @@ private class FeransChannel(
         channel = c
 
         // Pasang listener SEBELUM subscribe agar tidak ada request yang terlewat.
-        requestJob = scope.launch {
+        requestJob = scope.launch(start = CoroutineStart.UNDISPATCHED) {
             c.broadcastFlow<ConnectionRequestPayload>(event = "connection_request")
                 .collectLatest { payload ->
                     onRequest(ConnectionRequest(payload.sessionId))
@@ -237,6 +238,13 @@ private class FeransChannel(
 
         try {
             c.subscribe(blockUntilSubscribed = true)
+            c.broadcast(
+                event = "device_status",
+                message = buildJsonObject {
+                    put("deviceId", deviceId)
+                    put("status", "ready")
+                }
+            )
             onStatus("Siap")
         } catch (e: Throwable) {
             requestJob?.cancel()
@@ -267,6 +275,17 @@ private class FeransChannel(
     }
 
     suspend fun close() {
+        try {
+            channel?.broadcast(
+                event = "device_status",
+                message = buildJsonObject {
+                    put("deviceId", deviceId)
+                    put("status", "offline")
+                }
+            )
+        } catch (_: Throwable) {
+            // Channel may already be disconnected; nothing else is required here.
+        }
         requestJob?.cancel()
         requestJob = null
         channel?.unsubscribe()
