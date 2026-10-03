@@ -38,6 +38,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -213,6 +214,7 @@ private class FeransChannel(
 ) {
     private var channel: io.github.jan.supabase.realtime.RealtimeChannel? = null
     private var requestJob: Job? = null
+    private var realtimeStatusJob: Job? = null
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private suspend fun topic(): String {
@@ -237,7 +239,22 @@ private class FeransChannel(
         }
 
         try {
-            c.subscribe(blockUntilSubscribed = true)
+            realtimeStatusJob?.cancel()
+            realtimeStatusJob = scope.launch(start = CoroutineStart.UNDISPATCHED) {
+                supabase.realtime.status.collectLatest { realtimeStatus ->
+                    when (realtimeStatus) {
+                        io.github.jan.supabase.realtime.Realtime.Status.CONNECTING -> onStatus("WebSocket: Menghubungkan...")
+                        io.github.jan.supabase.realtime.Realtime.Status.CONNECTED -> onStatus("WebSocket: Terhubung, menunggu channel...")
+                        io.github.jan.supabase.realtime.Realtime.Status.DISCONNECTED -> onStatus("WebSocket: Terputus")
+                    }
+                }
+            }
+
+            onStatus("WebSocket: Menghubungkan...")
+            withTimeout(15_000L) {
+                c.subscribe(blockUntilSubscribed = true)
+            }
+            onStatus("Channel: SUBSCRIBED")
             c.broadcast(
                 event = "device_status",
                 message = buildJsonObject {
@@ -246,11 +263,22 @@ private class FeransChannel(
                 }
             )
             onStatus("Siap")
+        } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
+            requestJob?.cancel()
+            requestJob = null
+            realtimeStatusJob?.cancel()
+            realtimeStatusJob = null
+            channel?.unsubscribe()
+            channel = null
+            onStatus("TIMEOUT: Supabase Realtime tidak selesai terhubung dalam 15 detik")
         } catch (e: Throwable) {
             requestJob?.cancel()
             requestJob = null
+            realtimeStatusJob?.cancel()
+            realtimeStatusJob = null
+            channel?.unsubscribe()
             channel = null
-            onStatus("Gagal terhubung: " + (e.message ?: "Realtime error"))
+            onStatus("Realtime ERROR: " + (e.message ?: e::class.simpleName ?: "Unknown error"))
         }
     }
 
@@ -288,6 +316,8 @@ private class FeransChannel(
         }
         requestJob?.cancel()
         requestJob = null
+        realtimeStatusJob?.cancel()
+        realtimeStatusJob = null
         channel?.unsubscribe()
         channel = null
     }
