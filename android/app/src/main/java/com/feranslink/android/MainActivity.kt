@@ -55,7 +55,9 @@ private val supabase = createSupabaseClient(
 ) {
     install(Realtime) {
         // FeransLink memakai Realtime public channel tanpa sistem login.
-        // Jangan memutus WebSocket hanya karena tidak ada Auth session.
+        // Izinkan Realtime berjalan tanpa Auth session dan jangan memutus
+        // WebSocket hanya karena tidak ada session.
+        requireValidSession = false
         disconnectOnSessionLoss = false
     }
 }
