@@ -23,7 +23,8 @@ dependencies {
     implementation("androidx.compose.ui:ui:1.9.3")
     implementation("androidx.compose.material3:material3:1.4.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.11.0")
-    implementation("io.github.jan-tennert.supabase:realtime-kt:3.2.0")
+    implementation("io.github.jan-tennert.supabase:realtime-kt:3.2.1")
     implementation("io.ktor:ktor-client-android:3.2.1")
     implementation("io.ktor:ktor-client-core:3.2.1")
+    implementation("io.ktor:ktor-client-websockets:3.2.1")
 }
