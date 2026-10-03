@@ -217,7 +217,7 @@ private class FeransChannel(
     private suspend fun topic(): String {
         val bytes = MessageDigest.getInstance("SHA-256")
             .digest(("$deviceId|$pin").lowercase().toByteArray())
-        return "feranslink-" + bytes.joinToString("") { "%02x".format(it) }
+        return "feranslink-" + bytes.joinToString("") { "%02x".format(it.toInt() and 0xff) }
     }
 
     suspend fun start(
