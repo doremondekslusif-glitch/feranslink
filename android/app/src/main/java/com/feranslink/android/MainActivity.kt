@@ -257,6 +257,11 @@ private class FeransChannel(
 
             onStatus("WebSocket: Menghubungkan...")
             withTimeout(20_000L) {
+                // Connect explicitly first. This avoids relying on the implicit
+                // connect-on-subscribe path on Android and makes the socket
+                // lifecycle deterministic.
+                supabase.realtime.connect()
+                onStatus("WebSocket: Terhubung, masuk ke channel...")
                 c.subscribe(blockUntilSubscribed = true)
             }
             onStatus("Channel: SUBSCRIBED")
