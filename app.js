@@ -76,7 +76,7 @@ async function connectRealtime(i){
   activeSessionId=randomSessionId();
 
   activeChannel=supabaseClient
-    .channel(topic)
+    .channel(topic,{config:{broadcast:{ack:true}}})
     .on("broadcast",{event:"connection_response"},payload=>{
       const data=payload.payload||{};
       if(data.sessionId!==activeSessionId)return;
@@ -109,16 +109,25 @@ async function connectRealtime(i){
       setRealtimeStatus("Server terhubung",true);
       $("#remoteStatusText").textContent="Meminta izin Android";
       $("#screenMessage").textContent="Permintaan koneksi sedang dikirim ke Android...";
-      await activeChannel.send({
-        type:"broadcast",
-        event:"connection_request",
-        payload:{
-          sessionId:activeSessionId,
-          deviceId:device.id,
-          controller:"windows",
-          requestedAt:new Date().toISOString()
+      try{
+        const sendResult=await activeChannel.send({
+          type:"broadcast",
+          event:"connection_request",
+          payload:{
+            sessionId:activeSessionId,
+            deviceId:device.id,
+            controller:"windows",
+            requestedAt:new Date().toISOString()
+          }
+        });
+        if(sendResult!=="ok"){
+          $("#remoteStatusText").textContent="Request gagal dikirim";
+          $("#screenMessage").textContent="Server FeransLink tidak mengonfirmasi pengiriman permintaan ("+String(sendResult)+").";
         }
-      });
+      }catch(e){
+        $("#remoteStatusText").textContent="Request gagal dikirim";
+        $("#screenMessage").textContent="Pengiriman permintaan gagal: "+(e?.message||String(e));
+      }
     }else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){
       realtimeReady=false;
       setRealtimeStatus("Koneksi server bermasalah",false);
