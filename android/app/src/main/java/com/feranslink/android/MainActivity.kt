@@ -56,9 +56,7 @@ private val supabase = createSupabaseClient(
     install(Realtime) {
         // FeransLink memakai Realtime public channel tanpa sistem login.
         // Jangan memutus WebSocket hanya karena tidak ada Auth session.
-        requireValidSession = false
         disconnectOnSessionLoss = false
-        heartbeatInterval = kotlin.time.Duration.Companion.seconds(15)
     }
 }
 
